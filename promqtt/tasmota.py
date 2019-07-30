@@ -48,38 +48,38 @@ class TasmotaMQTTClient():
 
         # tele_SENSOR
         self._prom_exp.register(
-            name='tasmota_temperature',
+            m_name='tasmota_temperature',
             datatype='gauge',
             helpstr='Temperature in degree celsius',
             timeout=self._timeout)
         
         self._prom_exp.register(
-            name='tasmota_pressure',
+            m_name='tasmota_pressure',
             datatype='gauge',
             helpstr='Air pressure in millibar',
             timeout=self._timeout)
         
         self._prom_exp.register(
-            name='tasmota_rel_humidity',
+            m_name='tasmota_rel_humidity',
             datatype='gauge',
             helpstr='Relative humidity in percent',
             timeout=self._timeout)
 
         # tele_STATE
         self._prom_exp.register(
-            name='tasmota_vcc',
+            m_name='tasmota_vcc',
             datatype='gauge',
             helpstr='Supply voltate of tasmota node',
             timeout=self._timeout)
 
         self._prom_exp.register(
-            name='tasmota_wifi_rssi',
+            m_name='tasmota_wifi_rssi',
             datatype='gauge',
             helpstr='Relative wifi signal strength indicator',
             timeout=self._timeout)
         
         self._prom_exp.register(
-            name='tasmota_power',
+            m_name='tasmota_power',
             datatype='gauge',
             helpstr='Power state of sonoff switch.',
             timeout=self._timeout)
@@ -129,15 +129,15 @@ class TasmotaMQTTClient():
         # },"PressureUnit":"hPa","TempUnit":"C"}
         if 'BME280' in data:
             self._prom_exp.set(
-                name='tasmota_temperature',
+                m_name='tasmota_temperature',
                 value=data['BME280']['Temperature'],
                 labels={'node': node_name, 'sensor': 'BME280'})
             self._prom_exp.set(
-                name='tasmota_rel_humidity',
+                m_name='tasmota_rel_humidity',
                 value=data['BME280']['Humidity'],
                 labels={'node': node_name, 'sensor': 'BME280'})
             self._prom_exp.set(
-                name='tasmota_pressure',
+                m_ame='tasmota_pressure',
                 value=data['BME280']['Pressure'],
                 labels={'node': node_name, 'sensor': 'BME280'})
         else:
@@ -154,18 +154,18 @@ class TasmotaMQTTClient():
         data = json.loads(payload)
     
         self._prom_exp.set(
-            name='tasmota_vcc',
+            m_name='tasmota_vcc',
             value=data['Vcc'],
             labels={'node': node_name})
         self._prom_exp.set(
-            name='tasmota_wifi_rssi',
+            m_name='tasmota_wifi_rssi',
             value=data['Wifi']['RSSI'],
             labels={'node': node_name})
         
         if 'POWER' in data:
             value = 1 if data['POWER'] == 'ON' else 0
             self._prom_exp.set(
-                name='tasmota_power',
+                m_yname='tasmota_power',
                 value=value,
                 labels={'node': node_name})
                    

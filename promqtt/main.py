@@ -29,13 +29,13 @@ def parse_args():
 
 def export_build_info(pe, title, version):
     pe.register(
-        name='tasmota_build_info',
+        m_name='tasmota_build_info',
         datatype='gauge',
         helpstr='Version info',
         timeout=None)
 
     pe.set(
-        name='tasmota_build_info',
+        m_name='tasmota_build_info',
         value='1',
         labels={'version': version})
 
@@ -61,10 +61,14 @@ def main():
     
     signal.signal(signal.SIGTERM, sigterm_handler)
 
-    pe = PrometheusExporter(http_cfg=cfg['http'])
-    export_build_info(pe, __title__, __version__)
+    
+    pe = PrometheusExporter(
+        interface=cfg['http']['interface'],
+        port=cfg['http']['port'])
     pe.start_server_thread()
 
+    export_build_info(pe, __title__, __version__)
+    
     tmc = TasmotaMQTTClient(pe, mqtt_cfg=cfg['mqtt'])
     tmc.loop_forever()
     
