@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import signal
-import sys
 
 from ruamel.yaml import YAML
 
@@ -20,7 +19,14 @@ from promqtt.tasmota import TasmotaMQTTClient
 def sigterm_handler(signum, stack_frame):
     '''Handle the SIGTERM signal by shutting down.'''
 
+    # Deal with unused variables according to pylint suggestion
+    del signum
+    del stack_frame
+
     logging.info('Terminating promqtt. Bye!')
+
+    # TODO: Check if this can be done better. Need to terminate all threads.
+    #pylint: disable=protected-access
     os._exit(0)
 
 
@@ -35,16 +41,16 @@ def parse_args():
     return parser.parse_args()
 
 
-def export_build_info(pe, title, version):
+def export_build_info(promexp, version):
     '''Export build information for prometheus.'''
 
-    pe.register(
+    promexp.register(
         name='tasmota_build_info',
         datatype='gauge',
         helpstr='Version info',
         timeout=None)
 
-    pe.set(
+    promexp.set(
         name='tasmota_build_info',
         value='1',
         labels={'version': version})
@@ -63,6 +69,8 @@ def setup_logging(verbose):
 
 
 def main():
+    '''Main function of the promqtt tool.'''
+
     signal.signal(signal.SIGTERM, sigterm_handler)
 
     args = parse_args()
@@ -75,17 +83,16 @@ def main():
 
     # load device configuration
     yaml = YAML(typ='safe')
-    with open(cfg['cfgfile']) as f:
-        devcfg = yaml.load(f)
+    with open(cfg['cfgfile']) as filehdl:
+        devcfg = yaml.load(filehdl)
 
-
-    pe = PrometheusExporter()
-    export_build_info(pe, __title__, __version__)
+    promexp = PrometheusExporter()
+    export_build_info(promexp, __version__)
 
     routes = {
         '/metrics': {
             'type': 'text/plain',
-            'fct': pe.render
+            'fct': promexp.render
         },
         '/cfg_json': {
             'type': 'application/json',
@@ -100,7 +107,7 @@ def main():
     httpsrv = HttpServer(http_cfg=cfg['http'], routes=routes)
     httpsrv.start_server_thread()
 
-    tmc = TasmotaMQTTClient(pe, mqtt_cfg=cfg['mqtt'], cfg=devcfg)
+    tmc = TasmotaMQTTClient(promexp, mqtt_cfg=cfg['mqtt'], cfg=devcfg)
     tmc.loop_forever()
 
 
