@@ -7,14 +7,18 @@ from copy import deepcopy
 def _push_dev_settings_to_channels(devs):
     '''Push settings from device level down to channel level.'''
 
-    for devname, dev in devs.items():
+    for dev in devs.values():
         for name, val in dev.items():
+            # we only push settings of basic types to the channels, no
+            # structured types.
             if isinstance(val, dict):
                 continue
 
-            for chname, ch in dev['channels'].items():
-                if (name not in ch):
-                    ch[name] = dev[name]
+            # copy setting from device to channel, but do not overwrite values
+            # already present in a channel.
+            for chnl in dev['channels'].values():
+                if name not in chnl:
+                    chnl[name] = dev[name]
 
 
 def _inherit_from_types(types, devs):
@@ -29,9 +33,9 @@ def _inherit_from_types(types, devs):
             typ = types[devtype]
 
             # update channels from type to device
-            for chname, ch in typ['channels'].items():
+            for chname, chnl in typ['channels'].items():
                 if chname not in dev['channels']:
-                    dev['channels'][chname] = deepcopy(ch)
+                    dev['channels'][chname] = deepcopy(chnl)
 
             for name, val in typ.items():
                 # all value types can be inherited, but no structures
@@ -45,16 +49,16 @@ def _set_name_attribute(devs):
     for devname, dev in devs.items():
         dev['_dev_name'] = devname
 
-        for chname, ch in dev['channels'].items():
-            ch['_ch_name'] = chname
+        for chname, chnl in dev['channels'].items():
+            chnl['_ch_name'] = chname
 
 
 def _split_topics(devs):
     '''Convert string topics to lists (split at /).'''
 
-    for devname, dev in devs.items():
-        for ch in dev['channels'].values():
-            ch['topic'] = ch['topic'].split('/')
+    for dev in devs.values():
+        for chnl in dev['channels'].values():
+            chnl['topic'] = chnl['topic'].split('/')
 
 
 def prepare_devices(dev_cfg):
