@@ -56,9 +56,8 @@ class PrometheusExporter():
         )
 
         if name not in self._prom:
-            msg = "Cannot set not registered measurement '{name}'."
-            logging.error(msg.format(name=name))
-            return
+            msg = "Cannot set value for unknown measurement '{name}'."
+            raise PrometheusExporterException(msg.format(name=name))
 
         namestr = '{name}{{{labels}}}'.format(
             name=name,

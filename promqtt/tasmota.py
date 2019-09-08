@@ -51,7 +51,6 @@ class TasmotaMQTTClient():
             host=mqtt_cfg['broker'],
             port=mqtt_cfg['port'])
 
-        # TODO: we should not subscribe for everything below the prefix
         sub_topic = '#'
         self._mqttc.subscribe(sub_topic)
 

@@ -80,12 +80,11 @@ def test_promqtt_set(promexp):
 def test_promqtt_not_registered(promexp):
     '''Setting a value to a not registered measurement raises an exception.'''
 
-    # TODO: currently no exception, but log entry. Good???
-    #with pytest.raises(Exception):
-    promexp.set(
-        name='test_meas_2',
-        value=12.3,
-        labels={})
+    with pytest.raises(PrometheusExporterException):
+        promexp.set(
+            name='test_meas_2',
+            value=12.3,
+            labels={})
 
 
 def test_promqtt_timeout(promexp):

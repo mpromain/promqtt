@@ -25,7 +25,6 @@ def sigterm_handler(signum, stack_frame):
 
     logging.info('Terminating promqtt. Bye!')
 
-    # TODO: Check if this can be done better. Need to terminate all threads.
     #pylint: disable=protected-access
     os._exit(0)
 
