@@ -1,4 +1,5 @@
-
+'''Configuration descriptor specifying all the command-line options /
+corresponding environment variables.'''
 
 cfg_desc = {
     'http.interface': {
