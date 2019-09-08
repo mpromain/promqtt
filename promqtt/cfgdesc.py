@@ -1,7 +1,7 @@
 '''Configuration descriptor specifying all the command-line options /
 corresponding environment variables.'''
 
-cfg_desc = {
+CFG_DESC = {
     'http.interface': {
         'type': str,
         'help': 'Interface to bind the http server to.',

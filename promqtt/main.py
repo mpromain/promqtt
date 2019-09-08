@@ -9,7 +9,7 @@ import signal
 from ruamel.yaml import YAML
 
 from promqtt.__version__ import __title__, __version__
-from promqtt.cfgdesc import cfg_desc
+from promqtt.cfgdesc import CFG_DESC
 from promqtt.configer import prepare_argparser, eval_cfg
 from promqtt.http import HttpServer
 from promqtt.prom import PrometheusExporter
@@ -36,7 +36,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Tasmota MQTT to Prometheus exporter.")
 
-    prepare_argparser(cfg_desc, parser)
+    prepare_argparser(CFG_DESC, parser)
 
     return parser.parse_args()
 
@@ -77,7 +77,7 @@ def main():
 
     # currently we do not load a config file
     filecfg = {}
-    cfg = eval_cfg(cfg_desc, filecfg, os.environ, args)
+    cfg = eval_cfg(CFG_DESC, filecfg, os.environ, args)
     setup_logging(cfg['verbose'])
 
 
