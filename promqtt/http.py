@@ -6,7 +6,17 @@ from threading import Thread
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
 class PromHttpRequestHandler(BaseHTTPRequestHandler):
+    '''Implementation of the http request handler for a very basic webserver
+    mainly serving the prometheus data and a few diagnostic pages.'''
+
+    #pylint: disable=invalid-name
     def do_GET(self):
+        '''Handler for HTTP GET method.
+
+        This checks if the requested path is contained in the routes structure
+        and then calls the specified rendering function. Otherwise it returns
+        a 404 page.'''
+
         if self.path in self.server.srv.routes:
             route = self.server.srv.routes[self.path]
 
@@ -22,6 +32,8 @@ class PromHttpRequestHandler(BaseHTTPRequestHandler):
 
 
 class HttpServer():
+    '''HTTP server thread implementation.'''
+
     def __init__(self, http_cfg, routes):
         self._http_cfg = http_cfg
         self._routes = routes
@@ -29,6 +41,11 @@ class HttpServer():
 
     @property
     def routes(self):
+        '''Provides the routes dictionary for access by the HTTP request
+        handler.
+
+        :returns: The routes structure'''
+
         return self._routes
 
 

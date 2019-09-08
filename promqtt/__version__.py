@@ -1,4 +1,4 @@
-'''Version information for promqtt. 
+'''Version information for promqtt.
 
 This is the only place where the version information is managed.'''
 
