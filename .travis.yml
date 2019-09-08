@@ -8,10 +8,11 @@ python:
 install:
   - "pip install pipenv"
   - "pipenv sync --dev"
-  
+
 # command to run tests
 script:
-  - "pytest --verbose"
-  # this should exit with 1 only for fatal and error findings. Otherwise exit
-  # code is 0 and the build is regarded successful.
-  #- "pylint pybinmap; exit $(($? & 3))"
+  # Run unit tests
+  - "pipenv run pytest --verbose"
+
+  # Only check fatal (1), error (2) and warning (4) exit codes from pylint.
+  - "pipenv run pylint --rcfile ./pylintrc --output-format promqtt; exit $(($? & 7))"
