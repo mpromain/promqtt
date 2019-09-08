@@ -15,4 +15,4 @@ script:
   - "pipenv run pytest --verbose"
 
   # Only check fatal (1), error (2) and warning (4) exit codes from pylint.
-  - "pipenv run pylint --rcfile ./pylintrc --output-format promqtt; exit $(($? & 7))"
+  - "pipenv run pylint --rcfile ./pylintrc --output-format colorized promqtt; exit $(($? & 7))"
