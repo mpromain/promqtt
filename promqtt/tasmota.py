@@ -6,7 +6,31 @@ import logging
 import paho.mqtt.client as mqtt
 from promqtt.device_loader import prepare_devices
 
+
+def _is_topic_matching(ch_topic, msg_topic):
+    '''Check if the msg_topic (already split as list) matches the ch_topic (also
+    split as list).
+
+    :param ch_topic: The pattern topic, already split at '/' as a list.
+    :param msg_topic: The matching topic, split at '/' as a list.
+
+    :return: True if msg_topic matches the pattern ch_topic.'''
+
+    if len(ch_topic) != len(msg_topic):
+        return False
+
+    # check if all topic elements either match or equal the wildcard
+    # character '+'
+    result = all(
+        (part in ('+', msg_topic[i]))
+        for i, part in enumerate(ch_topic))
+
+    return result
+
+
 class TasmotaMQTTClient():
+    '''MQTT client implementation'''
+
     def __init__(self, prom_exp, mqtt_cfg, cfg):
         self._prom_exp = prom_exp
 
@@ -36,6 +60,7 @@ class TasmotaMQTTClient():
 
 
     def loop_forever(self):
+        '''Start the MQTT receiver loop. This function does not return.'''
         self._mqttc.loop_forever()
 
 
@@ -52,22 +77,12 @@ class TasmotaMQTTClient():
                 timeout=meas['timeout'] if meas['timeout'] else None)
 
 
-    def _is_topic_matching(self, ch_topic, msg_topic):
-        '''Check if the msg_topic (already split as list) matches the ch_topic (also
-        split as list).'''
-
-        if len(ch_topic) != len(msg_topic):
-            return False
-
-        result = all(
-            ((part=='+') or (part==msg_topic[i]))
-            for i, part in enumerate(ch_topic))
-
-        return result
-
-
     def on_mqtt_msg(self, client, obj, msg):
         '''Handle incoming MQTT message.'''
+
+        # handle unused argument according to pylint suggestion
+        del client
+        del obj
 
         try:
             msg_data = {
@@ -79,26 +94,27 @@ class TasmotaMQTTClient():
             for dev in self._cfg['devices'].values():
                 self._handle_device(dev, msg_data)
 
-        except Exception as ex:
-            logging.exception('fail')
-            print(ex)
+        #pylint: disable=broad-except
+        except Exception:
+            logging.exception('Failed to process a received MQTT message.')
 
 
     def _handle_device(self, dev, msg_data):
-        for ch in dev['channels'].values():
-            if self._is_topic_matching(ch['topic'], msg_data['topic']):
+        for chnl in dev['channels'].values():
+            if _is_topic_matching(chnl['topic'], msg_data['topic']):
                 try:
-                    self._handle_channel(dev, ch, msg_data)
-                except Exception as ex:
-                    msg = "Failed to handle device '{dev}', channel '{ch}'."
+                    self._handle_channel(dev, chnl, msg_data)
+                #pylint: disable=broad-except
+                except Exception:
+                    msg = "Failed to handle device '{dev}', channel '{chnl}'."
                     logging.exception(msg.format(
                         dev=dev['_dev_name'],
-                        ch=ch['_ch_name']))
+                        chnl=chnl['_ch_name']))
 
 
-    def _handle_channel(self, dev, ch, msg_data):
+    def _handle_channel(self, dev, chnl, msg_data):
         # Step 1: parse value
-        if ch['parse'] == 'json':
+        if chnl['parse'] == 'json':
             value = json.loads(msg_data['raw_payload'])
         else:
             value = msg_data['raw_payload']
@@ -106,33 +122,34 @@ class TasmotaMQTTClient():
         # Step 2: Extract value from payload (e.g. a specific value from JSON
         # structure) by string formatting
         try:
-            value = ch['value'].format(dev=dev, ch=ch, msg=msg_data, value=value)
-        except KeyError as k:
+            value = chnl['value'].format(dev=dev, chnl=chnl, msg=msg_data, value=value)
+        except KeyError:
             msg = (
                 "Failed to process value access in device '{dev}', "
-                "channel '{ch}', expression '{expr}' for payload '{payload}'."
+                "channel '{chnl}', expression '{expr}' for payload '{payload}'."
             )
             logging.debug(msg.format(
                 dev=dev['_dev_name'],
-                ch=ch['_ch_name'],
-                expr=ch['value'],
+                chnl=chnl['_ch_name'],
+                expr=chnl['value'],
                 payload=msg_data['raw_payload']))
             return
 
         # Step 3: map string values to numeric values
-        if 'map' in ch:
-            if value in ch['map']:
-                value = ch['map'][value]
+        if 'map' in chnl:
+            if value in chnl['map']:
+                value = chnl['map'][value]
             else:
                 value = float('nan')
 
         # Step 4: scale
-        if ('factor' in ch) or ('offset' in ch):
+        if ('factor' in chnl) or ('offset' in chnl):
             try:
-                value = (float(value)
-                              * ch.get('factor', 1.0)
-                              + ch.get('offset', 0.0))
-            except:
+                value = (
+                    float(value)
+                    * chnl.get('factor', 1.0)
+                    + chnl.get('offset', 0.0))
+            except ValueError:
                 # generate "not a number" value
                 value = float('nan')
 
@@ -140,13 +157,14 @@ class TasmotaMQTTClient():
         msg_data['val'] = value
 
         bind_labels = {
-            k.format(dev=dev, ch=ch, msg=msg_data):
-            v.format(dev=dev, ch=ch, msg=msg_data)
-            for k,v in ch['labels'].items()}
+            lname.format(dev=dev, chnl=chnl, msg=msg_data):
+            lval.format(dev=dev, chnl=chnl, msg=msg_data)
+            for lname, lval in chnl['labels'].items()
+        }
 
-        measurement = ch['measurement'].format(
+        measurement = chnl['measurement'].format(
             dev=dev,
-            ch=ch,
+            chnl=chnl,
             msg=msg_data,
             value=value)
 
